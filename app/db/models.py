@@ -10,4 +10,7 @@ class Content(Base):
     __tablename__ = "content"
     id = Column(Integer, primary_key=True)
     name = Column(String(200), unique=True)
-    created_at = Column(DateTime, default=datetime.now, server_default=)
+    created_at = Column(
+        DateTime,
+        default=datetime.now,
+    )
