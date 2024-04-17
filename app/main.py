@@ -1,15 +1,13 @@
-# from collections.abc import Sequence
-# from datetime import datetime
-
-from fastapi import Body, Depends, FastAPI, HTTPException, Query, status
-from sqlalchemy import delete, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.db.connection import async_session, get_session
-from app.db.models import Content
+from fastapi import FastAPI, HTTPException, Query, Body, status, Depends
 from app.routes import router
-from app.schema import ContentFilterEntity, ContentInput, ContentOut
+from app.schema import ContentOut, ContentInput, ContentFilterEntity
+from datetime import datetime
+from app.db.connection import get_session, async_session
+from app.db.models import Content
 from app.servises import ContentService
+from sqlalchemy import select, update, delete
+from sqlalchemy.ext.asyncio import AsyncSession
+from collections.abc import Sequence
 
 app = FastAPI()
 
@@ -35,71 +33,51 @@ async def get_all_content(
     service: ContentService = Depends(get_content_service),
 ) -> list[ContentOut]:
     results = await service.get_contents(filter_=filter_)
-    return [ContentOut.model_validate(table_row, from_attributes=True) for table_row in results]
+    # return [ContentOut.model_validate(table_row, from_attributes=True) for table_row in results]
+    return results
 
 
 @app.get("/contents/{id}")
-async def get_one_content(id: int) -> ContentOut:
-    session = async_session()
-    stmt = select(Content).where(Content.id == id)
-    # r = await session.get(entity=Content, ident=id)
-    result = await session.scalar(stmt)
-    if result is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Content with id={id} is not found",
-        )
+async def get_one_content(
+    id: int,
+    service: ContentService = Depends(get_content_service),
+) -> ContentOut:
+    result = await service.get_content(ident=id)
     return ContentOut.model_validate(result, from_attributes=True)
 
 
-@app.post("/contents/")
+@app.post(
+    "/contents/",
+    description="You can add information in content",
+)
 async def add_content(
     payload: ContentInput,
+    service: ContentService = Depends(get_content_service),
     # name: str = Body(
     #     description="This is the name of content",
     #     min_length=1,
     #     max_length=200,
     # ),
-):
-    new_content = Content(name=payload.name)
-    session = async_session()
-    session.add(new_content)
-    await session.commit()
+) -> ContentOut:
+    # new_content = Content(name=payload.name)
+    new_content = await service.create_content(name=payload.name)
+    # session = async_session()
+    # session.add(new_content)
+    # await session.commit()
     return ContentOut.model_validate(new_content, from_attributes=True)
 
 
-@app.put("/contents/{id}")
+@app.put(
+    "/contents/{id}",
+    description="You can change information in content",
+)
 async def change_content(
     id: int,
-    name: str = Body(
-        description="This is new name of content",
-        min_length=1,
-        max_length=200,
-    ),
+    payload: ContentInput,
+    service: ContentService = Depends(get_content_service),
 ):
-    session = async_session()
-    content = await session.get(entity=Content, ident=id)
-    if content is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Content with id={id} is not found",
-        )
-    # stmt = (
-    #     update(Content)
-    #     .where(Content.id == id)
-    #     .values(name=name)
-    #     .returning(3
-    #         Content.id,
-    #         Content.name,
-    #         Content.created_at,
-    #     )
-    # )
-    # result = (await session.execute(stmt)).one_or_none()
-    content.name = name
-    session.add(content)
-    await session.commit()
-    return ContentOut.model_validate(content, from_attributes=True)
-    # session.add()
+    update_content = await service.update_content(id=id, name=payload.name)
+    return ContentOut.model_validate(update_content, from_attributes=True)
 
 
 @app.delete(
@@ -107,35 +85,26 @@ async def change_content(
 )
 async def delete_content(
     id: int,
-):
-    session = async_session()
-    content = await session.get(entity=Content, ident=id)
-    if content is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Id={id} is not exist",
-        )
-    # delete(Content).where(Content.id == id)
-    # del Content[id]
-    await session.delete(content)
-    await session.commit()
+    service: ContentService = Depends(get_content_service),
+) -> None:
+    await service.delete_content(id=id)
     return None
 
 
-@app.patch("/content/{id}", description="If you want to make edits")
-async def change_content_partially(
-    id: int,
-    name: str = Body(
-        description="This is new name of content",
-        min_length=1,
-        max_length=200,
-    ),
-):
-    session = async_session()
-    content = await session.get(entity=Content, ident=id)
-    if content is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Id={id} is not exist",
-        )
-    return []
+# @app.patch("/content/{id}", description="If you want to make edits")
+# async def change_content_partially(
+#     id: int,
+#     name: str = Body(
+#         description="This is new name of content",
+#         min_length=1,
+#         max_length=200,
+#     ),
+# ):
+#     session = async_session()
+#     content = await session.get(entity=Content, ident=id)
+#     if content is None:
+#         raise HTTPException(
+#             status_code=404,
+#             detail=f"Id={id} is not exist",
+#         )
+#     return []
