@@ -1,5 +1,18 @@
+from typing import Self, TypeVar
+from collections.abc import Sequence
 from pydantic import BaseModel, Field
 from datetime import datetime
+from app.db.models import Base
+
+DBModelT = TypeVar("DBModelT", bound=Base)
+
+
+class BaseEntity(BaseModel):
+    model_config = {"from_attributes": True}
+
+    @classmethod
+    def model_validate_list(cls, objs: Sequence[DBModelT]) -> list[Self]:
+        return [cls.model_validate(obj) for obj in objs]
 
 
 class BaseContent(BaseModel):
@@ -14,7 +27,7 @@ class ContentInput(BaseContent):
     pass
 
 
-class ContentOut(BaseContent):
+class ContentOut(BaseEntity):
     """Схема данных для вывода Content"""
 
     id: int
@@ -25,3 +38,17 @@ class ContentFilterEntity(BaseModel):
     """Сущность фильтра Content"""
 
     name: str | None = Field(None, description="Фильтр по названию медиа контента")
+
+
+class UserFilterEntity(BaseModel):
+    """Сущность фильтра User"""
+
+    username: str | None = Field(None, description="Фильтр по логину")
+
+
+class UserOut(BaseEntity):
+    """Схема данных для вывода User"""
+
+    id: int
+    username: str
+    created_at: datetime

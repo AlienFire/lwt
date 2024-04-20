@@ -1,18 +1,34 @@
-from fastapi import FastAPI, HTTPException, Query, Body, status, Depends
-from app.routes import router
-from app.schema import ContentOut, ContentInput, ContentFilterEntity
-from datetime import datetime
-from app.db.connection import get_session, async_session
-from app.db.models import Content
-from app.servises import ContentService
-from sqlalchemy import select, update, delete
-from sqlalchemy.ext.asyncio import AsyncSession
 from collections.abc import Sequence
+from datetime import datetime
+from typing import TypeVar
+
+from fastapi import Body, Depends, FastAPI, HTTPException, Query, status
+from sqlalchemy import delete, select, update
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db.connection import async_session, get_session
+from app.db.models import Content, User
+from app.routes import router
+from app.schema import ContentFilterEntity, ContentInput, ContentOut, UserFilterEntity, UserOut
+from app.servises import ContentService, UserService
+
+ServiceT = TypeVar("ServiceT")
 
 app = FastAPI()
 
 
 app.include_router(router)
+
+
+def get_service(
+    service: type[ServiceT],
+):
+    def create_service(
+        session: AsyncSession = Depends(get_session),
+    ) -> ServiceT:
+        return service(session=session)
+
+    return Depends(create_service)
 
 
 def get_content_service(
@@ -25,6 +41,57 @@ def get_content_filter(
     name: str | None = Query(None, description="Фильтр по названию медиа контента"),
 ) -> ContentFilterEntity:
     return ContentFilterEntity(name=name)
+
+
+def get_user_filter(
+    username: str | None = Query(None, description="Фильтр по логину"),
+) -> UserFilterEntity:
+    return UserFilterEntity(username=username)
+
+
+@app.get("/users/")
+async def get_all_users(
+    # service: UserService = Depends(get_content_service),
+    service: UserService = get_service(UserService),
+    filter_: UserFilterEntity = Depends(get_user_filter),
+) -> list[UserOut]:
+    results = await service.get_users(filter_=filter_)
+    return results
+
+
+# @app.get("/users/")
+# async def get_all_users():
+#     session = async_session()
+#     stmt = select(User)
+
+#     list_of_users = (await session.scalars(stmt)).all()
+
+#     return [UserOut(id=c.id, username=c.username, created_at=c.created_at) for c in list_of_users]
+
+
+@app.get("/user/{id}")
+async def get_one_user(
+    id: int,
+    service: UserService = get_service(UserService),
+) -> UserOut:
+    return await service.get_one_user(id=id)
+
+
+@app.post("/user/")
+async def create_new_user(
+    username: str,
+    password: str,
+    service: UserService = get_service(UserService),
+) -> UserOut:
+    return await service.create_user(username=username, password=password)
+
+
+@app.delete("/delete/{id}")
+async def delete_user(
+    id: int,
+    service: UserService = get_service(UserService),
+) -> None:
+    return await service.delete_user(id=id)
 
 
 @app.get("/contents/")
@@ -80,9 +147,7 @@ async def change_content(
     return ContentOut.model_validate(update_content, from_attributes=True)
 
 
-@app.delete(
-    "/contents/{id}", status_code=status.HTTP_204_NO_CONTENT, description="This is description"
-)
+@app.delete("/contents/{id}")
 async def delete_content(
     id: int,
     service: ContentService = Depends(get_content_service),
