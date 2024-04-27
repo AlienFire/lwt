@@ -9,6 +9,7 @@ DBModelT = TypeVar("DBModelT", bound=Base)
 
 class BaseEntity(BaseModel):
     model_config = {"from_attributes": True}
+    name: str | None = Field(None, description="Фильтр по названию медиа контента")
 
     @classmethod
     def model_validate_list(cls, objs: Sequence[DBModelT]) -> list[Self]:
@@ -44,6 +45,7 @@ class UserFilterEntity(BaseModel):
     """Сущность фильтра User"""
 
     username: str | None = Field(None, description="Фильтр по логину")
+
 
 
 class UserOut(BaseEntity):

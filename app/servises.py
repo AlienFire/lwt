@@ -1,15 +1,9 @@
-from collections.abc import Sequence
-from datetime import datetime
-
-from fastapi import Body, Depends, HTTPException, status
-from sqlalchemy import delete, select, update
+from fastapi import HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.connection import async_session, get_session
 from app.db.models import Content, User
-
-# from app.main import get_content_filter, get_content_service
-from app.schema import ContentFilterEntity, ContentInput, ContentOut, UserFilterEntity, UserOut
+from app.schema import ContentFilterEntity, ContentOut, UserFilterEntity, UserOut
 
 
 class UserService:

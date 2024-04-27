@@ -1,5 +1,4 @@
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine, AsyncSession
-from typing import AsyncGenerator
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 # TODO получать из settings
 DSN = "postgresql+asyncpg://postgres:postgres@localhost/postgres"
@@ -12,15 +11,3 @@ async_session = async_sessionmaker(
     expire_on_commit=False,
 )
 
-
-async def get_session() -> AsyncGenerator:
-    try:
-        session: AsyncSession = async_session()
-        yield session
-    finally:
-        await session.close()
-
-
-# DSN
-
-# egine and sessionmaker
