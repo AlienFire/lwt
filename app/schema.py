@@ -47,7 +47,6 @@ class UserFilterEntity(BaseModel):
     username: str | None = Field(None, description="Фильтр по логину")
 
 
-
 class UserOut(BaseEntity):
     """Схема данных для вывода User"""
 

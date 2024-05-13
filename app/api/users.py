@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.di.filters import get_user_filter
 from app.di.services import get_user_service
@@ -16,7 +16,6 @@ async def get_all_users(
     return results
 
 
-
 @user_router.get("/{id}")
 async def get_one_user(
     id: int,
@@ -25,12 +24,34 @@ async def get_one_user(
     return await service.get_one_user(id=id)
 
 
+@user_router.post("/find")
+async def search_user(
+    username: str, password: str, service: UserService = Depends(get_user_service)
+) -> UserOut | None:
+    user = await service.find_user(
+        username=username,
+        password=password,
+    )
+    if user:
+        return UserOut.model_validate(user)
+    raise HTTPException(
+        status_code=400,
+        detail="username or password is incorrect",
+    )
+
+
 @user_router.post("/")
 async def create_new_user(
     username: str,
     password: str,
     service: UserService = Depends(get_user_service),
 ) -> UserOut:
+    user = await service.find_user(username=username, password=password)
+    if user:
+        raise HTTPException(
+            status_code=500,
+            detail="This user is exist",
+        )
     return await service.create_user(username=username, password=password)
 
 
