@@ -18,8 +18,8 @@ auth_router = APIRouter()
 
 
 fake_users_db = {
-    "johndoe": {
-        "username": "johndoe",
+    "user": {
+        "username": "user",
         "full_name": "John Doe",
         "email": "johndoe@example.com",
         "hashed_password": "$2b$12$q1QXotTIWVH2y/AmuS5hM.33nx6RukV4TeiwPQROqiGEpKNDSqtLm",
@@ -50,7 +50,7 @@ class UserInDB(User):
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 
 def verify_password(plain_password, hashed_password):

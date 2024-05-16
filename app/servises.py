@@ -29,12 +29,10 @@ class UserService:
     async def find_user(
         self,
         username: str,
-        password: str,
     ) -> User | None:
         stmt = select(User)
         stmt = select(User).where(
-            User.username == username,
-            User.password == password,
+            User.username == username
         )
         return await self._session.scalar(stmt)
 
