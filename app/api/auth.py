@@ -62,6 +62,7 @@ def get_password_hash(password):
 
 
 def get_user(db, username: str):
+
     if username in db:
         user_dict = db[username]
         return UserInDB(**user_dict)
@@ -87,7 +88,8 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return encoded_jwt
 
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)],
+                           service:UserService = Depends(get_user_service),):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -98,10 +100,11 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
-        token_data = TokenData(username=username)
+        # token_data = TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    user = get_user(fake_users_db, username=token_data.username)
+    user = await service.find_user(username=username)
+    # user = get_user(fake_users_db, username=token_data.username)
     if user is None:
         raise credentials_exception
     return user
@@ -118,8 +121,10 @@ async def get_current_active_user(
 @auth_router.post("/token")
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    servises: UserService = Depends(get_user_service)
 ) -> Token:
-    user = authenticate_user(fake_users_db, form_data.username, form_data.password)
+    user = await servises.find_user(username=form_data.username)
+    # user = authenticate_user(fake_users_db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -149,9 +154,9 @@ async def read_own_items(
 
 @auth_router.post("/auth_token/")
 async def auth_token(
-    username: str, password: str, service: UserService = Depends(get_user_service)
+    username: str, service: UserService = Depends(get_user_service)
 ) -> Token:
-    user = await service.find_user(username=username, password=password)
+    user = await service.find_user(username=username)
     if user is None:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
 
