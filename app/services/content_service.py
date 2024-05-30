@@ -3,7 +3,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Content
-from app.schema import ContentFilterEntity, ContentOut
+from app.schema import (
+    ContentFilterEntity,
+    ContentOut,
+)
 
 
 class ContentService:

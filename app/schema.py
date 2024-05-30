@@ -68,3 +68,24 @@ class JWTData(BaseModel):
 class UserIn(BaseModel):
     username: str
     password: str
+
+
+class NotebookInto(BaseModel):
+    """Схема данных на вход записей"""
+
+    header: str = Field(description="Заголовок записки")
+    note: str
+
+
+class NotebookIntoPatch(NotebookInto):
+    """Схема ввода данных для изменения записей"""
+
+    id: int
+
+
+class NotebookOut(NotebookInto, BaseEntity):
+    """Схема данных для вывода Notebook"""
+
+    id: int
+    author: str
+    date: datetime

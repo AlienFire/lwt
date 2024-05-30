@@ -4,7 +4,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.di.datebase import get_session
-from app.services import ContentService, UserService
+from app.services import ContentService, UserService, NotebookService
 
 ServiceT = TypeVar("ServiceT")
 
@@ -31,3 +31,5 @@ def get_content_service(
     return ContentService(session=session)
 
 
+def get_notebook_service(session: AsyncSession = Depends(get_session)) -> NotebookService:
+    return NotebookService(session=session)

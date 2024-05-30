@@ -34,3 +34,29 @@ class User(Base):
         DateTime,
         default=datetime.now,
     )
+
+
+class Notebook(Base):
+    __tablename__ = "notebook"
+    id: Mapped[Integer] = mapped_column(
+        "id",
+        Integer,
+        primary_key=True,
+    )
+    header: Mapped[String] = mapped_column(
+        "header",
+        String(300),)
+    note: Mapped[String] = mapped_column(
+        "note",
+        String,)
+    author: Mapped[String] = mapped_column(
+        "author",
+        String(200),
+    )
+    date: Mapped[DateTime] = mapped_column(
+        "date",
+        DateTime,
+        default=datetime.now()
+    )
+
+
