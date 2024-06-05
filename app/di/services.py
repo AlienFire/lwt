@@ -1,10 +1,10 @@
 from typing import TypeVar
 
-from fastapi import Depends, Query
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.di.datebase import get_session
-from app.servises import ContentService, UserService
+from app.services import ContentService, UserService
 
 ServiceT = TypeVar("ServiceT")
 

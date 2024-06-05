@@ -1,6 +1,6 @@
 from fastapi import Query
 
-from app.servises import ContentFilterEntity, UserFilterEntity
+from app.schema import ContentFilterEntity, UserFilterEntity
 
 
 def get_user_filter(

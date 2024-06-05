@@ -1,16 +1,18 @@
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 
 from app.api.auth import (ACCESS_TOKEN_EXPIRE_MINUTES, Token,
-                          create_access_token, get_current_active_user,
-                          get_current_user, get_password_hash,
-                          get_user_service, pwd_context)
+                          create_access_token, get_password_hash,
+                          pwd_context)
+from app.db.models import User
+from app.di.auth import get_auth_user
 from app.di.filters import get_user_filter
 from app.di.services import get_user_service
-from app.servises import UserFilterEntity, UserOut, UserService
+from app.schema import UserFilterEntity
+from app.services.user_service import UserOut, UserService
 
 user_router = APIRouter()
 
@@ -19,6 +21,7 @@ user_router = APIRouter()
 async def get_all_users(
     service: UserService = Depends(get_user_service),
     filter_: UserFilterEntity = Depends(get_user_filter),
+    auth_user: User = Depends(get_auth_user)
 ) -> list[UserOut]:
     results = await service.get_users(filter_=filter_)
     return results
@@ -37,7 +40,7 @@ async def search_user(
     username: str,
     password: str,
     service: UserService = Depends(get_user_service),
-    check_user: UserService = Depends(get_current_user),
+    check_user: User = Depends(get_auth_user),
 ) -> UserOut | None:
     # hash_password = get_password_hash(password=password)
     user = await service.find_user(username=username)
@@ -71,6 +74,7 @@ async def create_new_user(
 async def delete_user(
     id: int,
     service: UserService = Depends(get_user_service),
+    auth_user: User = Depends(get_auth_user)
 ) -> None:
     return await service.delete_user(id=id)
 
@@ -81,7 +85,6 @@ async def login_for_access_token(
     servises: UserService = Depends(get_user_service),
 ) -> Token:
     user = await servises.find_user(username=form_data.username)
-    # user = authenticate_user(fake_users_db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

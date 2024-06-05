@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends
 
 from app.di.filters import get_content_filter
 from app.di.services import get_content_service
-from app.schema import ContentInput, ContentOut
-from app.servises import ContentFilterEntity, ContentService
+from app.schema import ContentInput, ContentOut, ContentFilterEntity
+from app.services import ContentService
 
 content_router = APIRouter()
 
