@@ -1,18 +1,12 @@
-from datetime import timedelta
-from typing import Annotated
+from fastapi import APIRouter, Depends, HTTPException
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
-
-from app.api.auth import (ACCESS_TOKEN_EXPIRE_MINUTES, Token,
-                          create_access_token, get_password_hash,
-                          pwd_context)
 from app.db.models import User
 from app.di.auth import get_auth_user
 from app.di.filters import get_user_filter
 from app.di.services import get_user_service
-from app.schema import UserFilterEntity
-from app.services.user_service import UserOut, UserService
+from app.schema import UserFilterEntity, UserIn, UserOut
+from app.services.auth_services import AuthorizationService
+from app.services.user_service import UserService
 
 user_router = APIRouter()
 
@@ -21,10 +15,15 @@ user_router = APIRouter()
 async def get_all_users(
     service: UserService = Depends(get_user_service),
     filter_: UserFilterEntity = Depends(get_user_filter),
-    auth_user: User = Depends(get_auth_user)
+    auth_user: User = Depends(get_auth_user),
 ) -> list[UserOut]:
     results = await service.get_users(filter_=filter_)
     return results
+
+
+@user_router.get("/me")
+async def get_me(auth_user: User = Depends(get_auth_user)) -> UserOut:
+    return UserOut.model_validate(auth_user, from_attributes=True)
 
 
 @user_router.get("/{id}")
@@ -35,64 +34,25 @@ async def get_one_user(
     return await service.get_one_user(id=id)
 
 
-@user_router.post("/find")
-async def search_user(
-    username: str,
-    password: str,
-    service: UserService = Depends(get_user_service),
-    check_user: User = Depends(get_auth_user),
-) -> UserOut | None:
-    # hash_password = get_password_hash(password=password)
-    user = await service.find_user(username=username)
-    if user:
-        if pwd_context.verify(password, user.password):
-            return UserOut.model_validate(user)
-
-    raise HTTPException(
-        status_code=400,
-        detail="username or password is incorrect",
-    )
-
-
 @user_router.post("/")
 async def create_new_user(
-    username: str,
-    password: str,
+    user_data: UserIn,
     service: UserService = Depends(get_user_service),
 ) -> UserOut:
-    hash_password = get_password_hash(password=password)
-    user = await service.find_user(username=username)
+    user = await service.find_user(username=user_data.username)
     if user:
         raise HTTPException(
-            status_code=500,
+            status_code=400,
             detail="This user is exist",
         )
-    return await service.create_user(username=username, password=hash_password)
+    hash_password = AuthorizationService.get_password_hash(password=user_data.password)
+    return await service.create_user(username=user_data.username, password=hash_password)
 
 
 @user_router.delete("/{id}/delete")
 async def delete_user(
     id: int,
     service: UserService = Depends(get_user_service),
-    auth_user: User = Depends(get_auth_user)
+    auth_user: User = Depends(get_auth_user),
 ) -> None:
     return await service.delete_user(id=id)
-
-
-@user_router.post("/token")
-async def login_for_access_token(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    servises: UserService = Depends(get_user_service),
-) -> Token:
-    user = await servises.find_user(username=form_data.username)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
-    )
-    return Token(access_token=access_token, token_type="bearer")

@@ -53,3 +53,18 @@ class UserOut(BaseEntity):
     id: int
     username: str
     created_at: datetime
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class JWTData(BaseModel):
+    id: int
+    username: str
+
+
+class UserIn(BaseModel):
+    username: str
+    password: str
