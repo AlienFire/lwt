@@ -21,7 +21,7 @@ async def get_authorization_service(
 async def get_auth_user(
     authorization: AuthorizationService = Depends(get_authorization_service),
     token: str = Depends(oauth2_scheme),
-) -> User | None:
+) -> User:
     return await authorization.get_user_by_token(token=token)
 
 

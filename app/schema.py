@@ -9,8 +9,6 @@ DBModelT = TypeVar("DBModelT", bound=Base)
 
 class BaseEntity(BaseModel):
     model_config = {"from_attributes": True}
-    name: str | None = Field(None, description="Фильтр по названию медиа контента")
-
     @classmethod
     def model_validate_list(cls, objs: Sequence[DBModelT]) -> list[Self]:
         return [cls.model_validate(obj) for obj in objs]
@@ -87,5 +85,5 @@ class NotebookOut(NotebookInto, BaseEntity):
     """Схема данных для вывода Notebook"""
 
     id: int
-    author: str
+    author: UserOut
     date: datetime

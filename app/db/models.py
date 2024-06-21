@@ -1,5 +1,5 @@
-from sqlalchemy import Column, Integer, String, DateTime
-from sqlalchemy.orm import declarative_base, Mapped, mapped_column
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy.orm import declarative_base, Mapped, mapped_column, relationship
 
 from datetime import datetime
 
@@ -34,29 +34,33 @@ class User(Base):
         DateTime,
         default=datetime.now,
     )
+    notes: Mapped["list[Notebook]"] = relationship(
+        "Notebook",
+        back_populates="author",
+    )
 
 
 class Notebook(Base):
     __tablename__ = "notebook"
-    id: Mapped[Integer] = mapped_column(
+    id: Mapped[int] = mapped_column(
         "id",
         Integer,
         primary_key=True,
     )
-    header: Mapped[String] = mapped_column(
+    header: Mapped[str] = mapped_column(
         "header",
-        String(300),)
-    note: Mapped[String] = mapped_column(
+        String(300),
+    )
+    note: Mapped[str] = mapped_column(
         "note",
-        String,)
-    author: Mapped[String] = mapped_column(
-        "author",
-        String(200),
+        String,
     )
-    date: Mapped[DateTime] = mapped_column(
-        "date",
-        DateTime,
-        default=datetime.now()
+    date: Mapped[datetime] = mapped_column("date", DateTime, default=datetime.now())
+    user_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("user.id"),
     )
-
-
+    author: Mapped[User] = relationship(
+        "User",
+        back_populates="notes",
+    )
