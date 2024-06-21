@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 
 from app.di.filters import get_content_filter
 from app.di.services import get_content_service
@@ -37,8 +37,12 @@ async def get_one_content(
 async def add_content(
     payload: ContentInput,
     service: ContentService = Depends(get_content_service),
+    auth_user: User = Depends(get_auth_user),
 ) -> ContentOut:
-    new_content = await service.create_content(name=payload.name)
+    new_content = await service.create_content(
+        name=payload.name,
+        author=auth_user,
+    )
     return ContentOut.model_validate(new_content, from_attributes=True)
 
 
@@ -52,15 +56,22 @@ async def change_content(
     service: ContentService = Depends(get_content_service),
     auth_user: User = Depends(get_auth_user),
 ):
-    update_content = await service.update_content(id=id, name=payload.name)
+    update_content = await service.update_content(
+        id=id,
+        name=payload.name,
+        auth_user=auth_user,
+    )
     return ContentOut.model_validate(update_content, from_attributes=True)
 
 
-@content_router.delete("/{id}")
+@content_router.delete(
+    "/{id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
 async def delete_content(
     id: int,
     service: ContentService = Depends(get_content_service),
     auth_user: User = Depends(get_auth_user),
 ) -> None:
-    await service.delete_content(id=id)
+    await service.delete_content(id=id, auth_user=auth_user)
     return None

@@ -9,6 +9,7 @@ DBModelT = TypeVar("DBModelT", bound=Base)
 
 class BaseEntity(BaseModel):
     model_config = {"from_attributes": True}
+
     @classmethod
     def model_validate_list(cls, objs: Sequence[DBModelT]) -> list[Self]:
         return [cls.model_validate(obj) for obj in objs]
@@ -24,13 +25,6 @@ class ContentInput(BaseContent):
     """Схема данных для создания Content"""
 
     pass
-
-
-class ContentOut(BaseEntity):
-    """Схема данных для вывода Content"""
-
-    id: int
-    created_at: datetime
 
 
 class ContentFilterEntity(BaseModel):
@@ -66,6 +60,15 @@ class JWTData(BaseModel):
 class UserIn(BaseModel):
     username: str
     password: str
+
+
+class ContentOut(BaseEntity):
+    """Схема данных для вывода Content"""
+
+    id: int
+    author: UserOut
+    name: str
+    created_at: datetime
 
 
 class NotebookInto(BaseModel):

@@ -6,16 +6,6 @@ from datetime import datetime
 Base = declarative_base()
 
 
-class Content(Base):
-    __tablename__ = "content"
-    id = Column(Integer, primary_key=True)
-    name = Column(String(200), unique=True)
-    created_at = Column(
-        DateTime,
-        default=datetime.now,
-    )
-
-
 class User(Base):
     __tablename__ = "user"
     id: Mapped[int] = mapped_column(
@@ -37,6 +27,40 @@ class User(Base):
     notes: Mapped["list[Notebook]"] = relationship(
         "Notebook",
         back_populates="author",
+    )
+    content: Mapped["list[Content]"] = relationship(
+        "Content",
+        back_populates="author",
+    )
+
+
+class Content(Base):
+    __tablename__ = "content"
+    id: Mapped[int] = mapped_column(
+        "id",
+        Integer,
+        primary_key=True,
+    )
+    name: Mapped[str] = mapped_column(
+        "name",
+        String(200),
+        unique=True,
+    )
+    created_at: Mapped[DateTime] = mapped_column(
+        "created_at",
+        DateTime,
+        default=datetime.now,
+    )
+    user_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey(
+            "user.id",
+        ),
+    )
+
+    author: Mapped[User] = relationship(
+        "User",
+        back_populates="content",
     )
 
 
