@@ -14,7 +14,7 @@ class ContentService:
         self._session = session
 
     async def get_contents(self, filter_: ContentFilterEntity) -> list[ContentOut]:
-        stmt = select(Content)
+        stmt = select(Content).options()
         if filter_.name is not None:
             stmt = stmt.where(Content.name.ilike(f"%{filter_.name}%"))
         list_of_content = (await self._session.scalars(stmt)).all()

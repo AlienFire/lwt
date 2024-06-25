@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import declarative_base, Mapped, mapped_column, relationship
 
 from datetime import datetime
@@ -61,6 +61,7 @@ class Content(Base):
     author: Mapped[User] = relationship(
         "User",
         back_populates="content",
+        lazy="joined",
     )
 
 
