@@ -1,6 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.db.models import Content, User
 from app.schema import (
@@ -14,14 +15,20 @@ class ContentService:
         self._session = session
 
     async def get_contents(self, filter_: ContentFilterEntity) -> list[ContentOut]:
-        stmt = select(Content).options()
+        stmt = select(Content).options(joinedload(Content.author))
         if filter_.name is not None:
             stmt = stmt.where(Content.name.ilike(f"%{filter_.name}%"))
         list_of_content = (await self._session.scalars(stmt)).all()
         return ContentOut.model_validate_list(objs=list_of_content)
 
     async def get_content(self, ident: int) -> Content:
-        obj = await self._session.get(Content, ident=ident)
+        obj = await self._session.get(
+            Content,
+            ident=ident,
+            options=[
+                joinedload(Content.author),
+            ],
+        )
         if obj is None:
             raise HTTPException(
                 status_code=404,

@@ -1,7 +1,8 @@
-from sqlalchemy import Integer, String, DateTime, ForeignKey
+from sqlalchemy import Integer, String, DateTime, ForeignKey, Boolean, Enum
 from sqlalchemy.orm import declarative_base, Mapped, mapped_column, relationship
 
 from datetime import datetime
+from app.constants import ContentStatusEnum
 
 Base = declarative_base()
 
@@ -57,11 +58,19 @@ class Content(Base):
             "user.id",
         ),
     )
+    rewatch: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+    )
+    content_status: Mapped[ContentStatusEnum] = mapped_column(
+        Enum(ContentStatusEnum, native_enum=False, length=100),
+        server_default=ContentStatusEnum.at_plan,
+    )
 
     author: Mapped[User] = relationship(
         "User",
         back_populates="content",
-        lazy="joined",
+        # lazy="joined",
     )
 
 
