@@ -43,7 +43,7 @@ def upgrade() -> None:
                 native_enum=False,
                 length=100,
             ),
-            server_default="В плане на просмотр",
+            server_default="at_plan",
             nullable=False,
         ),
     )
